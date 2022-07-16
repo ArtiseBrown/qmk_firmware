@@ -1,0 +1,311 @@
+/*
+Copyright 2019 @foostan
+Copyright 2020 Drashna Jaelre <@drashna>
+Copyright 2021 Elliot Powell <@e11i0t23>
+Copyright 2021 Matt Gemmell <@mattgemmell>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+#include QMK_KEYBOARD_H
+#include "oneshot.h"
+#include "swapper.h"
+
+#define KC_MAC_UNDO LGUI(KC_Z)
+#define KC_MAC_REDO LSFT(LGUI(KC_Z))
+#define KC_MAC_CUT LGUI(KC_X)
+#define KC_MAC_COPY LGUI(KC_C)
+#define KC_MAC_PASTE LGUI(KC_V)
+#define KC_MAC_LOCK_SCRN LCTL(LGUI(KC_Q))
+#define KC_MAC_SCRN_SHOT LGUI(LSFT(KC_3))
+#define KC_MAC_SCRN_MRKP LGUI(LSFT(KC_4))
+//#define KC_MAC_HOME LGUI(KC_UP)
+//#define KC_MAC_END LGUI(KC_DOWN)
+#define KC_MAC_PREV_TAB LGUI(LSFT(KC_LBRACKET))
+#define KC_MAC_NEXT_TAB LGUI(LSFT(KC_RBRACKET))
+#define KC_MAC_SPOTLIGHT LGUI(KC_SPC)
+#define KC_EN_DASH LALT(KC_MINUS)
+#define KC_EM_DASH LSFT(LALT(KC_MINUS))
+
+#define ___off___	{0,0,0}
+#define MG__WHITE	{255,255,255}
+#define	MG____RED	{255,0,0}
+#define MG__GREEN	{32,159,33}
+#define MG___BLUE	{0,181,213}
+#define MG_YELLOW	{255,208,0}
+#define MG_ORANGE	{255,85,0}
+#define MG___PINK	{208,0,255}
+#define MG_PURPLE	{50,0,232}
+
+enum my_layers {
+    _BASE,
+    _NAV,
+    _NAV2,
+    _NUM,
+    _NUM2,
+    _ADJUST,
+};
+
+enum my_keycodes {
+    // Callum oneshot mod implementation with no timers.
+    OS_SHFT = SAFE_RANGE,
+    OS_CTRL,
+    OS_ALT,
+    OS_CMD,
+    //OS_CAPS, // for use as Globe on iPadOS, via remapping in Settings.app
+    OS_HYPR,
+    OS_HYPR2,
+    APP_SWITCH_FRWD, // cmd-tab but holds cmd between invocations
+};
+
+#define NAV MO(_NAV)
+#define NAV2 TG(_NAV2)
+#define NUM MO(_NUM)
+#define NUM2 TG(_NUM2)
+
+const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
+  [_BASE] = LAYOUT_split_3x6_3(
+       KC_ESC,  KC_Q,  KC_W, KC_F,  KC_P,   KC_B,   KC_J,  KC_L,   KC_U, KC_Y,   KC_QUOT,   KC_BSPC,
+//       XXXXXXX, SFT_T(KC_A),  CTL_T(KC_R),  OPT_T(KC_S),  CMD_T(KC_T),  HYPR_T(KC_G),   HYPR_T(KC_M),   CMD_T(KC_N),   OPT_T(KC_E),   CTL_T(KC_I),   SFT_T(KC_O),  XXXXXXX,
+       XXXXXXX, KC_A,  KC_R,   KC_S,   KC_T,   KC_G,   KC_M,   KC_N,   KC_E,   KC_I,   KC_O,   XXXXXXX,
+       NUM2,   KC_Z,   KC_X,   KC_C,   KC_D,   KC_V,   KC_K,   KC_H,   KC_COMM,   KC_DOT,   KC_SLSH,   NAV2,
+                                            XXXXXXX,   NUM,   KC_SPC,   KC_ENT,   NAV,   OS_SHFT
+  ),
+
+  [_NAV] = LAYOUT_split_3x6_3(
+      KC_ESC,   KC_TAB,       XXXXXXX,      KC_MAC_SCRN_SHOT,  KC_MAC_SCRN_MRKP,  XXXXXXX,            KC_PGUP,   KC_MAC_PREV_TAB,  KC_UP,           KC_MAC_NEXT_TAB, XXXXXXX, KC_BSPC,
+      XXXXXXX,  OS_SHFT,      OS_CTRL,      OS_ALT,            OS_CMD,            OS_HYPR2,           KC_PGDOWN, KC_LEFT,          KC_DOWN,         KC_RIGHT,        XXXXXXX, XXXXXXX,
+      NUM2,     KC_MAC_UNDO,  KC_MAC_CUT,   KC_MAC_COPY,       KC_MAC_PASTE,      KC_MAC_REDO,        XXXXXXX,   KC_MAC_SPOTLIGHT, APP_SWITCH_FRWD, XXXXXXX,         KC_ENT,  NAV2,
+                                             _______,          _______,           _______,            _______,   _______,           _______
+  ),
+
+ [_NAV2] = LAYOUT_split_3x6_3(
+      KC_ESC, KC_TAB,      XXXXXXX,    KC_MAC_SCRN_SHOT,  KC_MAC_SCRN_MRKP,  XXXXXXX,            KC_PGUP,   KC_MAC_PREV_TAB,  KC_UP,           KC_MAC_NEXT_TAB, XXXXXXX, KC_BSPC,
+      XXXXXXX, OS_SHFT,      OS_CTRL,    OS_ALT,            OS_CMD,            OS_HYPR2,            KC_PGDOWN, KC_LEFT,          KC_DOWN,         KC_RIGHT,        XXXXXXX, XXXXXXX,
+      NUM2, KC_MAC_UNDO, KC_MAC_CUT, KC_MAC_COPY,       KC_MAC_PASTE,      KC_MAC_REDO,        XXXXXXX,   KC_MAC_SPOTLIGHT, APP_SWITCH_FRWD, XXXXXXX,         KC_ENT,  NAV2,
+                                                         _______, _______, _______,             _______, _______, _______
+  ),
+
+  [_NUM] = LAYOUT_split_3x6_3(
+     KC_ESC, KC_TAB,     KC_SCLN,    KC_LPRN,     KC_RPRN,     KC_BSLASH,          KC_SLSH, KC_7, KC_8, KC_9, KC_MINUS,   KC_BSPC,
+     XXXXXXX, OS_SHFT,     OS_CTRL,    OS_ALT,      OS_CMD,      OS_HYPR2,            KC_ASTR, KC_4, KC_5, KC_6, KC_EQUAL,   XXXXXXX,
+     NUM2, KC_EN_DASH, KC_EM_DASH, KC_LBRACKET, KC_RBRACKET, KC_GRAVE,           KC_COMM, KC_1, KC_2, KC_3, KC_DOT,     NAV2,
+                                           _______, _______, _______,            KC_0, _______, _______
+  ),
+
+  [_NUM2] = LAYOUT_split_3x6_3(
+     KC_ESC, KC_TAB,     KC_SCLN,    KC_LPRN,     KC_RPRN,     KC_BSLASH,          KC_SLSH, KC_7, KC_8, KC_9, KC_MINUS,   KC_BSPC,
+     XXXXXXX, OS_SHFT,     OS_CTRL,    OS_ALT,      OS_CMD,      OS_HYPR2,            KC_ASTR, KC_4, KC_5, KC_6, KC_EQUAL,   XXXXXXX,
+     NUM2, KC_EN_DASH, KC_EM_DASH, KC_LBRACKET, KC_RBRACKET, KC_GRAVE,           KC_COMM, KC_1, KC_2, KC_3, KC_DOT,     NAV2,
+                                           _______, _______, _______,            KC_0, _______, _______
+  ),
+
+  [_ADJUST] = LAYOUT_split_3x6_3(
+      KC_ESC, XXXXXXX, KC_AUDIO_VOL_DOWN,   KC_AUDIO_MUTE,       KC_AUDIO_VOL_UP,     KC_MS_ACCEL2,            KC_MS_WH_DOWN,    KC_MS_BTN1, KC_MS_UP,   KC_MS_BTN2,  KC_MAC_LOCK_SCRN,   XXXXXXX,
+      XXXXXXX, OS_SHFT, OS_CTRL,             OS_ALT,              OS_CMD,              KC_MS_ACCEL1,            KC_MS_WH_UP,      KC_MS_LEFT, KC_MS_DOWN, KC_MS_RIGHT, KC_BRIGHTNESS_UP,   XXXXXXX,
+      NUM2, XXXXXXX, KC_MEDIA_PREV_TRACK, KC_MEDIA_PLAY_PAUSE, KC_MEDIA_NEXT_TRACK, KC_MS_ACCEL0,            XXXXXXX,          XXXXXXX,    XXXXXXX,    XXXXXXX,     KC_BRIGHTNESS_DOWN, NAV2,
+                                                                         _______, _______, _______,             _______, _______, _______
+  )
+};
+
+const uint8_t PROGMEM ledmap[][42][3] = {
+/* Starts at layer 1; we don't apply lights to Base (layer 0). */
+[_BASE] = {
+MG____RED, MG_ORANGE, ___off___, ___off___, ___off___, ___off___, 				___off___, ___off___, ___off___, ___off___, ___off___, MG____RED,
+___off___, ___off___, ___off___, ___off___, ___off___, ___off___, 				___off___, ___off___, ___off___, ___off___, ___off___, ___off___,
+MG_ORANGE, ___off___, ___off___, ___off___, ___off___, ___off___, 				___off___, ___off___, ___off___, ___off___, ___off___, MG___BLUE,
+								 ___off___, ___off___, ___off___, 				___off___, ___off___, ___off___
+			},
+[_NAV] = {
+MG____RED, MG_ORANGE, ___off___, MG___PINK, MG___PINK, ___off___, 				MG_ORANGE, MG___PINK, MG__WHITE, MG___PINK, ___off___, MG____RED,
+___off___, MG___BLUE, MG___BLUE, MG___BLUE, MG___BLUE, MG_PURPLE, 				MG_ORANGE, MG__WHITE, MG__WHITE, MG__WHITE, ___off___, ___off___,
+___off___, MG___PINK, ___off___, MG__GREEN, ___off___, ___off___, 				___off___, MG_YELLOW, MG_PURPLE, ___off___, MG___BLUE, MG___BLUE,
+								 ___off___, ___off___, ___off___, 				___off___, MG_ORANGE, ___off___
+			},
+[_NAV2] = {
+MG____RED, MG_ORANGE, ___off___, MG___PINK, MG___PINK, ___off___, 				MG_ORANGE, MG___PINK, MG__WHITE, MG___PINK, ___off___, MG____RED,
+MG___BLUE, MG___BLUE, MG___BLUE, MG___BLUE, MG___BLUE, MG_PURPLE, 				MG_ORANGE, MG__WHITE, MG__WHITE, MG__WHITE, ___off___, MG___BLUE,
+MG___BLUE, MG___PINK, ___off___, MG__GREEN, ___off___, ___off___, 				___off___, MG_YELLOW, MG_PURPLE, ___off___, MG___BLUE, MG__WHITE,
+								 ___off___, ___off___, ___off___, 				___off___, MG_ORANGE, ___off___
+			},
+[_NUM] = {
+MG____RED, MG_ORANGE, MG_ORANGE, MG_YELLOW, MG_YELLOW, MG___PINK, 				MG___PINK, MG__GREEN, MG__GREEN, MG__GREEN, ___off___, MG____RED,
+___off___, MG___BLUE, MG___BLUE, MG___BLUE, MG___BLUE, MG_PURPLE, 				___off___, MG__GREEN, MG__GREEN, MG__GREEN, ___off___, ___off___,
+___off___, ___off___, MG_PURPLE, MG_ORANGE, MG_ORANGE, ___off___, 				___off___, MG__GREEN, MG__GREEN, MG__GREEN, ___off___, MG___BLUE,
+						   		 ___off___, MG__GREEN, ___off___, 				MG__GREEN, ___off___, ___off___
+			},
+[_NUM2] = {
+MG____RED, MG_ORANGE, MG_ORANGE, MG_YELLOW, MG_YELLOW, MG___PINK, 				MG___PINK, MG__GREEN, MG__GREEN, MG__GREEN, ___off___, MG____RED,
+MG_ORANGE, MG___BLUE, MG___BLUE, MG___BLUE, MG___BLUE, MG_PURPLE, 				___off___, MG__GREEN, MG__GREEN, MG__GREEN, ___off___, MG_ORANGE,
+MG__WHITE, ___off___, MG_PURPLE, MG_ORANGE, MG_ORANGE, ___off___, 				___off___, MG__GREEN, MG__GREEN, MG__GREEN, ___off___, MG_ORANGE,
+						   		 MG_ORANGE, MG_ORANGE, ___off___, 				MG__GREEN, MG_ORANGE, MG_ORANGE
+			},
+[_ADJUST] = {
+MG____RED, ___off___, MG_PURPLE, MG____RED, MG_PURPLE, MG__GREEN, 				MG_ORANGE, MG___BLUE, MG__WHITE, MG___BLUE, MG____RED, MG____RED,
+___off___, MG___BLUE, MG___BLUE, MG___BLUE, MG___BLUE, MG_YELLOW, 				MG_ORANGE, MG__WHITE, MG__WHITE, MG__WHITE, MG_YELLOW, ___off___,
+___off___, ___off___, MG_YELLOW, MG_YELLOW, MG_YELLOW, MG____RED, 				___off___, ___off___, ___off___, ___off___, MG_YELLOW, MG___BLUE,
+						   		 ___off___, MG_PURPLE, ___off___, 				___off___, MG_PURPLE, ___off___
+			},
+};
+
+
+extern bool g_suspend_state;
+extern rgb_config_t rgb_matrix_config;
+
+void keyboard_post_init_user(void) {
+    rgb_matrix_enable();
+    rgb_matrix_sethsv_noeeprom(0, 0, 0); // (180, 255, 231) is purple
+    rgb_matrix_mode_noeeprom(1);
+}
+
+// ====================================================
+// RGB matrix
+// ====================================================
+
+uint8_t ledIndexForKeymapIndex(uint8_t keyIndex) {
+	// Turn keyIndex into a row and column within g_led_config.
+	// Reference: https://github.com/qmk/qmk_firmware/blob/master/keyboards/crkbd/r2g/r2g.c
+	uint8_t row = 0;
+	uint8_t col = 0;
+	uint8_t keysPerRow = 12; // Specific to crkdb!
+	uint8_t keysPerHalf = keysPerRow / 2; // Assumes equal split!
+
+	row = keyIndex / keysPerRow;
+	col = keyIndex % keysPerRow;
+	if (row == 3) { // Specific to crkbd!
+		col += 3; // Compensate for leading three NO_LED entries in g_led_config.
+	}
+
+	bool mirror = (col >= keysPerHalf);
+	if (mirror) {
+		// Normalise row and col per g_led_config structure.
+		row += 4;
+		col -= keysPerHalf;
+		// Mirror column position.
+		col = (keysPerHalf - 1) - col;
+	}
+
+	return g_led_config.matrix_co[row][col];
+}
+
+void rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
+
+    uint8_t layerNum = get_highest_layer(layer_state);
+    if (layerNum == 0) {
+        rgb_matrix_set_color_all(0, 0, 0);
+        return;
+    }
+
+    // Per-key indicators
+    uint8_t ledIndex = 0;
+    uint8_t r, g, b;
+    for (uint8_t keyIndex = 0; keyIndex < 42; keyIndex++) { // 0 to 42
+        ledIndex = ledIndexForKeymapIndex(keyIndex);
+
+        if (ledIndex >= led_min && ledIndex <= led_max) {
+            r = pgm_read_byte(&ledmap[layerNum][keyIndex][0]);
+            g = pgm_read_byte(&ledmap[layerNum][keyIndex][1]);
+            b = pgm_read_byte(&ledmap[layerNum][keyIndex][2]);
+
+            if (!r && !g && !b) {
+                RGB_MATRIX_INDICATOR_SET_COLOR(ledIndex, 0, 0, 0);
+            } else {
+                RGB_MATRIX_INDICATOR_SET_COLOR(ledIndex, r, g, b);
+            }
+        }
+    }
+    /*
+    // Underglow layer indicators
+    uint8_t keyIndex = 36; // layer-switch key
+    r = pgm_read_byte(&ledmap[layerNum][keyIndex][0]);
+    g = pgm_read_byte(&ledmap[layerNum][keyIndex][1]);
+    b = pgm_read_byte(&ledmap[layerNum][keyIndex][2]);
+    for (uint8_t  i = 0; i < 12; i++) {
+        ledIndex = (i < 6) ? i : i + 21;
+        RGB_MATRIX_INDICATOR_SET_COLOR(ledIndex, r, g, b);
+    }
+    */
+}
+
+// ====================================================
+// Callum One-Shot Modifiers
+// ====================================================
+
+bool is_oneshot_cancel_key(uint16_t keycode) {
+    switch (keycode) {
+    case NAV:
+    case NUM:
+        return true;
+    default:
+        return false;
+    }
+}
+
+bool is_oneshot_ignored_key(uint16_t keycode) {
+    switch (keycode) {
+    case NAV:
+    case NUM:
+    case KC_LSFT:
+    case OS_SHFT:
+    case OS_CTRL:
+    case OS_ALT:
+    case OS_CMD:
+    case OS_HYPR:
+        return true;
+    default:
+        return false;
+    }
+}
+
+oneshot_state os_shft_state = os_up_unqueued;
+oneshot_state os_ctrl_state = os_up_unqueued;
+oneshot_state os_alt_state = os_up_unqueued;
+oneshot_state os_cmd_state = os_up_unqueued;
+oneshot_state os_hypr_state = os_up_unqueued;
+
+bool app_switch_frwd_active = false;
+
+bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    update_swapper(
+        &app_switch_frwd_active, KC_LGUI, KC_TAB, APP_SWITCH_FRWD,
+        keycode, record
+    );
+
+    update_oneshot(
+        &os_shft_state, KC_LSFT, OS_SHFT,
+        keycode, record
+    );
+    update_oneshot(
+        &os_ctrl_state, KC_LCTL, OS_CTRL,
+        keycode, record
+    );
+    update_oneshot(
+        &os_alt_state, KC_LALT, OS_ALT,
+        keycode, record
+    );
+    update_oneshot(
+        &os_cmd_state, KC_LCMD, OS_CMD,
+        keycode, record
+    );
+    update_oneshot(
+        &os_hypr_state, KC_HYPR, OS_HYPR,
+        keycode, record
+    );
+
+    return true;
+}
+
+layer_state_t layer_state_set_user(layer_state_t state) {
+    return update_tri_layer_state(state, _NAV, _NUM, _ADJUST);
+}
