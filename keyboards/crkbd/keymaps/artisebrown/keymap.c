@@ -196,7 +196,7 @@ MG_ORANGE, ___off___, ___off___, ___off___, ___off___, ___off___, 				___off___,
 MG____RED, MG____RED, MG_ORANGE, MG___PINK, MG___PINK, ___off___, 				MG_ORANGE, MG___PINK, MG__WHITE, MG___PINK, MG____RED, MG____RED,
 MG____RED, MG___BLUE, MG___BLUE, MG___BLUE, MG___BLUE, MG_PURPLE, 				MG_ORANGE, MG__WHITE, MG__WHITE, MG__WHITE, ___off___, MG____RED,
 MG____RED, MG___PINK, MG__GREEN, MG__GREEN, MG__GREEN, MG___PINK, 				MG_ORANGE, MG_YELLOW, MG_PURPLE, ___off___, MG_ORANGE, MG____RED,
-								 MG___BLUE, MG___BLUE, MG____RED, 				___off___, ___off___, MG____RED
+								 MG___BLUE, MG___BLUE, MG____RED, 				___off___, ___off___, MG__GREEN
 			},
             
 [_MOUSE] = {
